@@ -57,14 +57,10 @@ class _CounterWidget extends StatelessWidget {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: <Widget>[
-        Text('You have pushed the button this many times:'),
-        Consumer<CounterController>(
-          builder: (context, controller, child) {
-            return Text(
-              '${controller.counter}',
-              style: Theme.of(context).textTheme.displayLarge,
-            );
-          },
+        const Text('You have pushed the button this many times:'),
+        Text(
+          '${context.select<CounterController, int>((value) => value.counter)}',
+          style: Theme.of(context).textTheme.displayLarge,
         ),
         ElevatedButton(
           onPressed: () {

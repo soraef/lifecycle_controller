@@ -377,46 +377,6 @@ class ScrollController extends LifecycleController {
 
 5. **Handle Errors Gracefully**: Always provide user feedback by handling errors using `showError` and customizing the error UI.
 
-## 📚 Advanced Usage
-
-### Handling Navigation
-
-Use lifecycle hooks like `onDidPush` and `onDidPop` to navigation-related logic.
-
-```dart
-class MyController extends LifecycleController {
-  @override
-  void onDidPush() {
-    super.onDidPush();
-    // Check for deep link parameters and handle accordingly
-  }
-}
-```
-
-### Responding to App Lifecycle Changes
-
-Override app lifecycle methods to pause or resume activities like timers, animations, or network requests.
-
-```dart
-class VideoController extends LifecycleController {
-  @override
-  void onPaused() {
-    super.onPaused();
-    // Pause video playback
-  }
-
-  @override
-  void onResumed() {
-    super.onResumed();
-    // Resume video playback
-  }
-}
-```
-
-### Integrating with Other State Management Solutions
-
-While **LifecycleController** uses Provider internally, it can be integrated with other state management solutions if needed, providing flexibility.
-
 ## ❓ FAQ
 
 

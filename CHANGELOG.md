@@ -9,3 +9,7 @@
 ### 0.0.3
 
 * feat: throttle() method added to the `LifycycleController` class.
+
+### 1.0.0
+
+*　Major release.
