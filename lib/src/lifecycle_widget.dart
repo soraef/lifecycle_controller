@@ -1,7 +1,13 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:lifecycle_controller/src/lifecycle_controller_interface.dart';
+import 'package:lifecycle_controller/src/mixins/lifecycle_mixin.dart';
 import 'package:provider/provider.dart';
 
 import 'lifecycle_controller.dart';
+import 'mixins/event_bus_mixin.dart';
+import 'mixins/loading_mixin.dart';
 
 /// A base class for stateful widgets that integrate with [LifecycleController].
 ///
@@ -30,7 +36,7 @@ import 'lifecycle_controller.dart';
 ///   }
 /// }
 /// ```
-abstract class LifecycleWidget<T extends LifecycleController>
+abstract class LifecycleWidget<T extends LifecycleControllerInterface>
     extends StatefulWidget {
   /// Creates a [LifecycleWidget].
   const LifecycleWidget({super.key});
@@ -55,6 +61,9 @@ abstract class LifecycleWidget<T extends LifecycleController>
   /// Override this method to perform actions when the controller's state changes.
   void onNotifyListeners(BuildContext context, T controller) {}
 
+  /// Called when event is emitted.
+  void onEvent(BuildContext context, T controller, Object event) {}
+
   @override
   LifecycleWidgetState<T> createState() => LifecycleWidgetState<T>();
 
@@ -77,8 +86,12 @@ abstract class LifecycleWidget<T extends LifecycleController>
   ///
   /// The default implementation shows a centered text widget with the error message.
   Widget buildError(BuildContext context, T controller) {
+    if (controller is! LoadingMixin) {
+      throw ArgumentError('Controller does not implement ErrorHandlingMixin');
+    }
+
     final errorMessage = context.select<T, String?>(
-      (value) => value.errorMessage,
+      (value) => (value as LoadingMixin).errorMessage,
     );
     return Material(child: Center(child: Text(errorMessage ?? 'Error')));
   }
@@ -90,10 +103,12 @@ abstract class LifecycleWidget<T extends LifecycleController>
 /// and handles app lifecycle events.
 ///
 /// You typically do not need to subclass this class.
-class LifecycleWidgetState<T extends LifecycleController>
+class LifecycleWidgetState<T extends LifecycleControllerInterface>
     extends State<LifecycleWidget<T>> with RouteAware, WidgetsBindingObserver {
   /// The associated controller for this widget.
   late final T controller;
+
+  StreamSubscription<Object>? _eventSubscription;
 
   /// Initializes the state and the controller.
   ///
@@ -101,12 +116,20 @@ class LifecycleWidgetState<T extends LifecycleController>
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addObserver(this);
     controller = widget.createController();
-    controller.addListener(onNotifyListeners);
+    WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      controller.onInit();
+      if (controller is LifecycleMixin) {
+        (controller as LifecycleMixin).onInit();
+      }
     });
+
+    controller.addListener(onNotifyListeners);
+
+    if (controller is EventBusMixin) {
+      _eventSubscription =
+          (controller as EventBusMixin).eventStream<Object>().listen(onEvent);
+    }
   }
 
   /// Subscribes to the route observer when dependencies change.
@@ -116,10 +139,11 @@ class LifecycleWidgetState<T extends LifecycleController>
   void didChangeDependencies() {
     super.didChangeDependencies();
     try {
-      controller.routeObserver?.subscribe(
-        this,
-        ModalRoute.of(context) as PageRoute,
-      );
+      if (controller is LifecycleMixin) {
+        (controller as LifecycleMixin)
+            .routeObserver
+            ?.subscribe(this, ModalRoute.of(context) as PageRoute);
+      }
     } catch (_) {}
   }
 
@@ -127,9 +151,13 @@ class LifecycleWidgetState<T extends LifecycleController>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    controller.routeObserver?.unsubscribe(this);
+    _eventSubscription?.cancel();
     controller.removeListener(onNotifyListeners);
-    controller.onDispose();
+
+    if (controller is LifecycleMixin) {
+      (controller as LifecycleMixin).routeObserver?.unsubscribe(this);
+      (controller as LifecycleMixin).onDispose();
+    }
     super.dispose();
   }
 
@@ -140,12 +168,18 @@ class LifecycleWidgetState<T extends LifecycleController>
     widget.onNotifyListeners(context, controller);
   }
 
+  void onEvent(Object event) {
+    widget.onEvent(context, controller, event);
+  }
+
   /// Called when the route has been pushed onto the navigator.
   ///
   /// Forwards the event to the controller's [onDidPush] method.
   @override
   void didPush() {
-    controller.onDidPush();
+    if (controller is LifecycleMixin) {
+      (controller as LifecycleMixin).onDidPush();
+    }
   }
 
   /// Called when a new route has been pushed, and the current route is no longer visible.
@@ -153,7 +187,9 @@ class LifecycleWidgetState<T extends LifecycleController>
   /// Forwards the event to the controller's [onDidPushNext] method.
   @override
   void didPushNext() {
-    controller.onDidPushNext();
+    if (controller is LifecycleMixin) {
+      (controller as LifecycleMixin).onDidPushNext();
+    }
   }
 
   /// Called when the next route has been popped off, and the current route is visible again.
@@ -161,7 +197,9 @@ class LifecycleWidgetState<T extends LifecycleController>
   /// Forwards the event to the controller's [onDidPopNext] method.
   @override
   void didPopNext() {
-    controller.onDidPopNext();
+    if (controller is LifecycleMixin) {
+      (controller as LifecycleMixin).onDidPopNext();
+    }
   }
 
   /// Called when the current route has been popped off the navigator.
@@ -169,7 +207,9 @@ class LifecycleWidgetState<T extends LifecycleController>
   /// Forwards the event to the controller's [onDidPop] method.
   @override
   void didPop() {
-    controller.onDidPop();
+    if (controller is LifecycleMixin) {
+      (controller as LifecycleMixin).onDidPop();
+    }
   }
 
   /// Handles app lifecycle state changes and forwards them to the controller.
@@ -179,19 +219,29 @@ class LifecycleWidgetState<T extends LifecycleController>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     switch (state) {
       case AppLifecycleState.inactive:
-        controller.onInactive();
+        if (controller is LifecycleMixin) {
+          (controller as LifecycleMixin).onInactive();
+        }
         break;
       case AppLifecycleState.paused:
-        controller.onPaused();
+        if (controller is LifecycleMixin) {
+          (controller as LifecycleMixin).onPaused();
+        }
         break;
       case AppLifecycleState.resumed:
-        controller.onResumed();
+        if (controller is LifecycleMixin) {
+          (controller as LifecycleMixin).onResumed();
+        }
         break;
       case AppLifecycleState.detached:
-        controller.onDetached();
+        if (controller is LifecycleMixin) {
+          (controller as LifecycleMixin).onDetached();
+        }
         break;
       case AppLifecycleState.hidden:
-        controller.onHidden();
+        if (controller is LifecycleMixin) {
+          (controller as LifecycleMixin).onHidden();
+        }
         break;
     }
   }
@@ -208,12 +258,19 @@ class LifecycleWidgetState<T extends LifecycleController>
       child: Builder(
         builder: (context) {
           Widget body = widget.build(context, controller);
-          final isLoading = context.select<T, bool>(
-            (value) => value.isLoading,
-          );
-          final errorMessage = context.select<T, String?>(
-            (value) => value.errorMessage,
-          );
+          final isLoading = switch (controller is LoadingMixin) {
+            true => context.select<T, bool>(
+                (value) => (value as LoadingMixin).isLoading,
+              ),
+            false => false,
+          };
+
+          final errorMessage = switch (controller is LoadingMixin) {
+            true => context.select<T, String?>(
+                (value) => (value as LoadingMixin).errorMessage,
+              ),
+            false => null,
+          };
 
           if (isLoading) {
             body = Stack(
