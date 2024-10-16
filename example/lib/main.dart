@@ -1,3 +1,4 @@
+import 'package:example/auto_save_page.dart';
 import 'package:flutter/material.dart';
 import 'package:lifecycle_controller/lifecycle_controller.dart';
 import 'package:provider/provider.dart';
@@ -6,8 +7,26 @@ void main() {
   runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+final GlobalKey<ScaffoldState> drawerKey = GlobalKey<ScaffoldState>();
+
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  final List<Widget> _pages = [
+    const CounterPage(),
+    const AutoSavePage(),
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -20,29 +39,42 @@ class MyApp extends StatelessWidget {
       navigatorObservers: [
         LifecycleController.basePageRouteObserver,
       ],
-      home: const MyHomePage(),
+      navigatorKey: navigatorKey,
+      home: Scaffold(
+        appBar: AppBar(
+          title: const Text('Playground'),
+        ),
+        drawer: Drawer(
+          key: drawerKey,
+          child: ListView.separated(
+            itemBuilder: (context, index) {
+              return ListTile(
+                title: Text('${_pages[index].runtimeType}'),
+                onTap: () {
+                  navigatorKey.currentState!.pop();
+                  navigatorKey.currentState!.push(
+                    MaterialPageRoute(
+                      builder: (context) {
+                        return _pages[index];
+                      },
+                    ),
+                  );
+                },
+              );
+            },
+            separatorBuilder: (context, index) {
+              return const Divider();
+            },
+            itemCount: _pages.length,
+          ),
+        ),
+      ),
     );
   }
 }
 
-class MyRouterDelegate extends RouterDelegate with ChangeNotifier {
-  @override
-  Widget build(BuildContext context) {
-    return const MyHomePage();
-  }
-
-  @override
-  Future<void> setNewRoutePath(configuration) async {}
-
-  @override
-  Future<bool> popRoute() {
-    // TODO: implement popRoute
-    throw UnimplementedError();
-  }
-}
-
-class MyHomePage extends LifecycleWidget<CounterController> {
-  const MyHomePage({super.key});
+class CounterPage extends LifecycleWidget<CounterController> {
+  const CounterPage({super.key});
 
   @override
   Widget build(BuildContext context, CounterController controller) {
@@ -113,6 +145,16 @@ class MyHomePage extends LifecycleWidget<CounterController> {
       ),
     );
   }
+
+  @override
+  Widget buildLoading(BuildContext context, CounterController controller) {
+    return Container(
+      color: Colors.white.withOpacity(0.5),
+      child: const Center(
+        child: CircularProgressIndicator(),
+      ),
+    );
+  }
 }
 
 class CounterController extends LifecycleController {
@@ -130,8 +172,8 @@ class CounterController extends LifecycleController {
       () async {
         await Future.delayed(const Duration(milliseconds: 300));
         if (_counter == 5) {
-          showError('Counter limit reached!');
-          return;
+          notifyListeners();
+          return 'Counter limit reached!';
         }
         _counter++;
         notifyListeners();
@@ -145,7 +187,6 @@ class CounterController extends LifecycleController {
         await Future.delayed(const Duration(seconds: 1));
         _counter = 0;
         clearError();
-        notifyListeners();
       },
     );
   }
@@ -153,14 +194,12 @@ class CounterController extends LifecycleController {
   @override
   void onDidPop() {
     super.onDidPush();
-    print('onDidPop');
     reset();
   }
 
   @override
   void onInactive() {
     super.onInactive();
-    print('onInactive');
     reset();
   }
 }
