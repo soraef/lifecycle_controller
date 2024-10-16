@@ -12,4 +12,9 @@
 
 ### 1.0.0
 
-*　Major release.
+* Major release.
+
+### 1.0.1
+
+* refactor: Separate each function into mixins
+* feat: Add mixin to send/receive events
