@@ -18,3 +18,7 @@
 
 * refactor: Separate each function into mixins
 * feat: Add mixin to send/receive events
+
+### 1.0.2
+
+* feat: Add LifecycleScope widget

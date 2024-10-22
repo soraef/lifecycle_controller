@@ -1,6 +1,6 @@
 name: lifecycle_controller
 description: "A Flutter library for simplified state and lifecycle management. Offers structured handling of screen events, local state, async operations, and UI updates, promoting clean architecture and maintainability in Flutter apps."
-version: 1.0.1
+version: 1.0.2
 homepage: https://github.com/soraef/lifecycle_controller
 
 environment:
