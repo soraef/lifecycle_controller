@@ -1,7 +1,9 @@
-import 'package:example/auto_save_page.dart';
+import 'package:example/auto_save_example.dart';
+import 'package:example/lifecycle_widget_example.dart';
 import 'package:flutter/material.dart';
 import 'package:lifecycle_controller/lifecycle_controller.dart';
 import 'package:provider/provider.dart';
+import 'package:example/simple_counter_example.dart' as simple;
 
 void main() {
   runApp(const MyApp());
@@ -20,6 +22,8 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   final List<Widget> _pages = [
     const CounterPage(),
+    const CounterPageWithLifecycleWidget(),
+    const simple.CounterWidget(),
     const AutoSavePage(),
   ];
 
@@ -73,86 +77,85 @@ class _MyAppState extends State<MyApp> {
   }
 }
 
-class CounterPage extends LifecycleWidget<CounterController> {
+class CounterPage extends StatelessWidget {
   const CounterPage({super.key});
 
   @override
-  Widget build(BuildContext context, CounterController controller) {
-    final counter = context.select<CounterController, int>(
-      (value) => value.counter,
-    );
-
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Flutter Demo Home Page'),
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text(
-              'You have pushed the button this many times:',
+  Widget build(BuildContext context) {
+    return LifecycleScope(
+      controller: CounterController(),
+      builder: (context) {
+        final controller = context.read<CounterController>();
+        final counter = context.select<CounterController, int>(
+          (value) => value.counter,
+        );
+        return Scaffold(
+          appBar: AppBar(
+            title: const Text('Flutter Demo Home Page'),
+          ),
+          body: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                const Text(
+                  'You have pushed the button this many times:',
+                ),
+                Text(
+                  '$counter',
+                  style: Theme.of(context).textTheme.headlineMedium,
+                ),
+              ],
             ),
-            Text(
-              '$counter',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-          ],
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: controller.increment,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ),
-    );
-  }
+          ),
+          floatingActionButton: FloatingActionButton(
+            onPressed: controller.increment,
+            tooltip: 'Increment',
+            child: const Icon(Icons.add),
+          ),
+        );
+      },
+      errorBuilder: (context) {
+        final errorMessage = context.select<CounterController, String?>(
+          (value) => value.errorMessage,
+        );
 
-  @override
-  CounterController createController() {
-    return CounterController();
-  }
+        final controller = context.read<CounterController>();
 
-  @override
-  Widget buildError(BuildContext context, CounterController controller) {
-    final errorMessage = context.select<CounterController, String?>(
-      (value) => value.errorMessage,
-    );
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Flutter Demo Home Page'),
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text(
-              'You have pushed the button this many times:',
+        return Scaffold(
+          appBar: AppBar(
+            title: const Text('Flutter Demo Home Page'),
+          ),
+          body: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                const Text(
+                  'You have pushed the button this many times:',
+                ),
+                Text(
+                  errorMessage ?? 'Error',
+                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.error,
+                      ),
+                ),
+              ],
             ),
-            Text(
-              errorMessage ?? 'Error',
-              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.error,
-                  ),
-            ),
-          ],
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: controller.reset,
-        tooltip: 'Reset',
-        child: const Icon(Icons.refresh),
-      ),
-    );
-  }
-
-  @override
-  Widget buildLoading(BuildContext context, CounterController controller) {
-    return Container(
-      color: Colors.white.withOpacity(0.5),
-      child: const Center(
-        child: CircularProgressIndicator(),
-      ),
+          ),
+          floatingActionButton: FloatingActionButton(
+            onPressed: controller.reset,
+            tooltip: 'Reset',
+            child: const Icon(Icons.refresh),
+          ),
+        );
+      },
+      loadingBuilder: (context) {
+        return Container(
+          color: Colors.white.withOpacity(0.5),
+          child: const Center(
+            child: CircularProgressIndicator(),
+          ),
+        );
+      },
     );
   }
 }

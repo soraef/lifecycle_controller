@@ -39,8 +39,6 @@ flutter pub get
 Create a controller by extending `LifecycleController`. This controller will manage the state and logic for your screen.
 
 ```dart
-import 'package:lifecycle_screen/lifecycle_screen.dart';
-
 class CounterController extends LifecycleController {
   int _counter = 0;
 
@@ -71,75 +69,40 @@ class CounterController extends LifecycleController {
 }
 ```
 
-### Step 2: Create a Screen Widget
+### Step 2: Setting up the LifecycleScope
 
-Create a screen by extending `LifecycleWidget`, linking it with your controller, and building your UI.
-
-```dart
-import 'package:flutter/material.dart';
-import 'package:lifecycle_screen/lifecycle_screen.dart';
-import 'package:provider/provider.dart';
-
-class CounterWidget extends LifecycleWidget<CounterController> {
-  const CounterWidget({Key? key}) : super(key: key);
-
-  @override
-  CounterController createController() => CounterController();
-
-  @override
-  Widget build(BuildContext context, CounterController controller) {
-    final counter = context.select<CounterController, int>(
-      (controller) => controller.counter,
-    );
-
-    return Scaffold(
-      appBar: AppBar(title: const Text('Counter Example')),
-      body: Center(
-        child: Text(
-          'Count: $counter',
-          style: Theme.of(context).textTheme.headlineMedium,
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: controller.increment,
-        child: const Icon(Icons.add),
-      ),
-    );
-  }
-}
-```
-
-### Step 3: Integrate into Your App
-
-Use your screen in the app and set up the `navigatorObservers` to enable lifecycle event tracking.
+Using `LifecycleScope`, you can create a controller. Within this `LifecycleScope`, you are free to use custom-created controllers by utilizing the approach provided by the Provider package.
 
 ```dart
-import 'package:flutter/material.dart';
-import 'package:lifecycle_screen/lifecycle_screen.dart';
-
-void main() {
-  runApp(const MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
-
-  // Initialize the RouteObserver
-  static final RouteObserver<PageRoute> routeObserver =
-      LifecycleController.basePageRouteObserver;
+class CounterWidget extends StatelessWidget {
+  const CounterWidget({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'LifecycleWidget Demo',
-      theme: ThemeData(primarySwatch: Colors.blue),
-      home: const CounterWidget(),
-      navigatorObservers: [routeObserver],
+    return LifecycleScope(
+      builder: (context) {
+        final controller = context.read<CounterController>();
+        final counter = context.select<CounterController, int>(
+          (value) => value.counter,
+        );
+        return Scaffold(
+          appBar: AppBar(title: const Text('Counter Example')),
+          body: Center(
+            child: Text(
+              'Count: $counter',
+            ),
+          ),
+          floatingActionButton: FloatingActionButton(
+            onPressed: controller.increment,
+            child: const Icon(Icons.add),
+          ),
+        );
+      },
+      controller: CounterController(),
     );
   }
 }
 ```
-
 ## 📖 Detailed Guide
 
 ### State Management with Provider
@@ -232,6 +195,22 @@ class MyController extends LifecycleController {
   }
 }
 ```
+
+If you want to use methods related to routing, such as `onDidPop`, you must set up a `RouteObserver`.
+
+```dart
+Widget build(BuildContext context) {
+  ...
+  return new MaterialApp(
+    ...
+    navigatorObservers: <NavigatorObserver>[
+      LifecycleController.basePageRouteObserver,
+    ],
+    ...
+  );
+}
+```
+
 
 ### Asynchronous Operations Handling
 
