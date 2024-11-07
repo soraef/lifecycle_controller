@@ -24,6 +24,37 @@ mixin SubscriptionMixin on ChangeNotifier {
     _subscriptions.add(subscription);
   }
 
+  /// Adds a [StreamSubscription] to the controller for automatic cancellation.
+  ///
+  /// The subscription will be cancelled when [onDispose] is called.
+  ///
+  /// ### Example
+  ///
+  /// ```dart
+  /// listen<T>(
+  ///   myStream,
+  ///   (value) {
+  ///     // Handle event
+  ///   },
+  /// );
+  /// ```
+  StreamSubscription<T> listen<T>(
+    Stream<T> stream,
+    void Function(T) onData, {
+    Function? onError,
+    void Function()? onDone,
+    bool? cancelOnError,
+  }) {
+    final subscription = stream.listen(
+      onData,
+      onError: onError,
+      onDone: onDone,
+      cancelOnError: cancelOnError,
+    );
+    addSubscription(subscription);
+    return subscription;
+  }
+
   /// Cancels a specific [StreamSubscription] and removes it from the list.
   ///
   /// [subscription] is the subscription to cancel.
