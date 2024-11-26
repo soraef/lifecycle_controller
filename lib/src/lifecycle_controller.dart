@@ -4,7 +4,7 @@ import 'package:lifecycle_controller/src/mixins/lifecycle_mixin.dart';
 
 import 'mixins/debounce_mixin.dart';
 import 'mixins/event_bus_mixin.dart';
-import 'mixins/loading_mixin.dart';
+import 'mixins/locker_mixin.dart';
 import 'mixins/subscription_mixin.dart';
 import 'mixins/throttle_mixin.dart';
 
@@ -38,11 +38,11 @@ abstract class LifecycleController
     with
         ChangeNotifier,
         LifecycleMixin,
-        LoadingMixin,
         SubscriptionMixin,
         DebounceMixin,
         ThrottleMixin,
-        EventBusMixin
+        EventBusMixin,
+        LockerMixin
     implements LifecycleControllerInterface {
   /// Creates a [LifecycleController] with an optional [RouteObserver].
   ///

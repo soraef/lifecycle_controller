@@ -26,18 +26,26 @@ mixin DebounceMixin on ChangeNotifier {
   ///   },
   /// );
   /// ```
-  void debounce({
+  @protected
+  Future<T?> debounce<T>({
     required String id,
     required Duration duration,
-    required VoidCallback action,
-  }) {
+    required FutureOr<T> Function() action,
+  }) async {
+    Completer<T?> completer = Completer<T?>();
+
     if (_debounceTimers.containsKey(id)) {
       _debounceTimers[id]?.cancel();
+      completer.complete(null);
     }
-    _debounceTimers[id] = Timer(duration, () {
-      action();
+
+    _debounceTimers[id] = Timer(duration, () async {
+      final result = await action();
       _debounceTimers.remove(id);
+      completer.complete(result);
     });
+
+    return completer.future;
   }
 
   /// Cancels all active debounce timers.

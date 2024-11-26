@@ -33,16 +33,19 @@ mixin LifecycleMixin on ChangeNotifier {
   ///
   /// Override this method to perform initialization tasks, such as fetching
   /// data or setting up listeners.
+  @protected
   void onInit() {}
 
   /// Called when the controller is disposed.
   /// Override this method to perform cleanup tasks.
+  @protected
   void onDispose() {}
 
   /// Called when the route has been pushed onto the navigator.
   ///
   /// This method is triggered by the [RouteObserver] when the current route
   /// becomes visible. Override it to perform actions when the screen appears.
+  @protected
   void onDidPush() {}
 
   /// Called when a new route has been pushed, and the current route is no longer visible.
@@ -50,43 +53,51 @@ mixin LifecycleMixin on ChangeNotifier {
   /// This method is triggered when another screen covers the current screen.
   /// Override it to pause animations or other activities that should not
   /// continue when the screen is not visible.
+  @protected
   void onDidPushNext() {}
 
   /// Called when the next route has been popped off, and the current route is visible again.
   ///
   /// This method is triggered when returning to the current screen from another.
   /// Override it to resume activities paused in [onDidPushNext].
+  @protected
   void onDidPopNext() {}
 
   /// Called when the current route has been popped off the navigator.
   ///
   /// This method is triggered when the current screen is closed.
   /// Override it to perform cleanup that should occur when the screen is closed.
+  @protected
   void onDidPop() {}
 
   /// Called when the app transitions to the [AppLifecycleState.inactive] state.
   ///
   /// This state occurs when the app is inactive and not receiving user input.
+  @protected
   void onInactive() {}
 
   /// Called when the app transitions to the [AppLifecycleState.paused] state.
   ///
   /// This state occurs when the app is paused and not visible to the user.
+  @protected
   void onPaused() {}
 
   /// Called when the app transitions to the [AppLifecycleState.resumed] state.
   ///
   /// This state occurs when the app is resumed and visible to the user.
+  @protected
   void onResumed() {}
 
   /// Called when the app transitions to the [AppLifecycleState.detached] state.
   ///
   /// This state occurs when the app is still hosted on a Flutter engine but is
   /// detached from any host views.
+  @protected
   void onDetached() {}
 
   /// Called when the app transitions to the [AppLifecycleState.hidden] state.
   ///
   /// This state occurs when the app is hidden from the user.
+  @protected
   void onHidden() {}
 }

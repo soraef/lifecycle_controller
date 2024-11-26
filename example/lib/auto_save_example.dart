@@ -54,6 +54,7 @@ class AutoSavePage extends StatelessWidget {
 
 class AutoSavePageController extends LifecycleController {
   final String saveKey = 'auto_save_page_text';
+  final loadingKey = LifecycleKey.unique();
 
   TextEditingController? textController;
 
@@ -62,12 +63,16 @@ class AutoSavePageController extends LifecycleController {
   @override
   void onInit() async {
     super.onInit();
-    await asyncRun(() async {
-      // wait for 1 second
-      await Future.delayed(const Duration(seconds: 1));
-      textController = TextEditingController(text: (await _fetchText()) ?? '');
-      notifyListeners();
-    });
+    await lock(
+      id: loadingKey,
+      action: () async {
+        await Future.delayed(const Duration(seconds: 1));
+        textController = TextEditingController(
+          text: (await _fetchText()) ?? '',
+        );
+        notifyListeners();
+      },
+    );
   }
 
   @override
@@ -78,7 +83,7 @@ class AutoSavePageController extends LifecycleController {
 
   void saveText(String text) async {
     debounce(
-      id: 'saveText',
+      id: LifecycleKey.unique(),
       duration: const Duration(seconds: 1),
       action: () async {
         await _saveText(text);

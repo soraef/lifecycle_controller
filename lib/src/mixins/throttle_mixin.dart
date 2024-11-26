@@ -7,7 +7,7 @@ import 'package:flutter/widgets.dart';
 /// The [ThrottleMixin] allows controllers to throttle actions, ensuring that they
 /// are only executed once within a specified duration.
 mixin ThrottleMixin on ChangeNotifier {
-  final Map<String, bool> _throttleLocks = {};
+  Map<String, bool> _throttleLocks = {};
 
   /// Executes an action after a specified [duration], throttling multiple calls.
   ///
@@ -29,20 +29,27 @@ mixin ThrottleMixin on ChangeNotifier {
   ///   },
   /// );
   /// ```
-  void throttle({
-    required VoidCallback action,
-    required Duration duration,
+  @protected
+  Future<T?> throttle<T>({
     required String id,
-  }) {
+    required Duration duration,
+    required FutureOr<T> Function() action,
+  }) async {
+    Completer<T?> completer = Completer<T?>();
     // Check if the throttle lock is already set
     if (_throttleLocks.containsKey(id) && _throttleLocks[id] == true) {
-      return;
+      completer.complete(null);
+      return completer.future;
     }
-    _throttleLocks[id] = true;
-    action();
+    _throttleLocks = {..._throttleLocks, id: true};
+    final result = await action();
+
     Timer(duration, () {
-      _throttleLocks[id] = false;
+      _throttleLocks = {..._throttleLocks, id: false};
     });
+
+    completer.complete(result);
+    return completer.future;
   }
 
   /// Cancels all active throttle timers.

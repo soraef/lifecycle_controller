@@ -114,48 +114,6 @@ class CounterPage extends StatelessWidget {
           ),
         );
       },
-      errorBuilder: (context) {
-        final errorMessage = context.select<CounterController, String?>(
-          (value) => value.errorMessage,
-        );
-
-        final controller = context.read<CounterController>();
-
-        return Scaffold(
-          appBar: AppBar(
-            title: const Text('Flutter Demo Home Page'),
-          ),
-          body: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                const Text(
-                  'You have pushed the button this many times:',
-                ),
-                Text(
-                  errorMessage ?? 'Error',
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.error,
-                      ),
-                ),
-              ],
-            ),
-          ),
-          floatingActionButton: FloatingActionButton(
-            onPressed: controller.reset,
-            tooltip: 'Reset',
-            child: const Icon(Icons.refresh),
-          ),
-        );
-      },
-      loadingBuilder: (context) {
-        return Container(
-          color: Colors.white.withOpacity(0.5),
-          child: const Center(
-            child: CircularProgressIndicator(),
-          ),
-        );
-      },
     );
   }
 }
@@ -164,6 +122,8 @@ class CounterController extends LifecycleController {
   int _counter = 0;
   int get counter => _counter;
 
+  final loadingKey = LifecycleKey.unique();
+
   @override
   void onInit() {
     super.onInit();
@@ -171,8 +131,9 @@ class CounterController extends LifecycleController {
   }
 
   Future<void> increment() async {
-    await asyncRun(
-      () async {
+    await lock(
+      id: loadingKey,
+      action: () async {
         await Future.delayed(const Duration(milliseconds: 300));
         if (_counter == 5) {
           notifyListeners();
@@ -185,11 +146,11 @@ class CounterController extends LifecycleController {
   }
 
   Future<void> reset() async {
-    await asyncRun(
-      () async {
+    await lock(
+      id: 'reset',
+      action: () async {
         await Future.delayed(const Duration(seconds: 1));
         _counter = 0;
-        clearError();
       },
     );
   }

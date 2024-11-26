@@ -4,11 +4,11 @@
 
 ### 0.0.2
 
-* feat: buildView() method changed to build() method.
+* FEAT: buildView() method changed to build() method.
 
 ### 0.0.3
 
-* feat: throttle() method added to the `LifycycleController` class.
+* FEAT: throttle() method added to the `LifycycleController` class.
 
 ### 1.0.0
 
@@ -16,9 +16,18 @@
 
 ### 1.0.1
 
-* refactor: Separate each function into mixins
-* feat: Add mixin to send/receive events
+* REFACTOR: Separate each function into mixins
+* FEAT: Add mixin to send/receive events
 
 ### 1.0.2
 
-* feat: Add LifecycleScope widget
+* FEAT: Add LifecycleScope widget
+
+### 1.0.3
+
+* FEAT: add listen method
+
+### 2.0.0
+
+* BREAKING CHANGE: LifecycleController abolishes LoadingMixin as it is the policy not to do any handling related to display.
+* FEAT: Added global event sending functionality to EventBusMixin

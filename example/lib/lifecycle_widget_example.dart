@@ -43,47 +43,4 @@ class CounterPageWithLifecycleWidget
   CounterController createController() {
     return CounterController();
   }
-
-  @override
-  Widget buildError(BuildContext context, CounterController controller) {
-    final errorMessage = context.select<CounterController, String?>(
-      (value) => value.errorMessage,
-    );
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Flutter Demo Home Page'),
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text(
-              'You have pushed the button this many times:',
-            ),
-            Text(
-              errorMessage ?? 'Error',
-              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.error,
-                  ),
-            ),
-          ],
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: controller.reset,
-        tooltip: 'Reset',
-        child: const Icon(Icons.refresh),
-      ),
-    );
-  }
-
-  @override
-  Widget buildLoading(BuildContext context, CounterController controller) {
-    return Container(
-      color: Colors.white.withOpacity(0.5),
-      child: const Center(
-        child: CircularProgressIndicator(),
-      ),
-    );
-  }
 }

@@ -1,3 +1,5 @@
+// ignore_for_file: invalid_use_of_protected_member
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -7,7 +9,6 @@ import 'package:provider/provider.dart';
 
 import 'lifecycle_controller.dart';
 import 'mixins/event_bus_mixin.dart';
-import 'mixins/loading_mixin.dart';
 
 /// A base class for stateful widgets that integrate with [LifecycleController].
 ///
@@ -66,35 +67,6 @@ abstract class LifecycleWidget<T extends LifecycleControllerInterface>
 
   @override
   LifecycleWidgetState<T> createState() => LifecycleWidgetState<T>();
-
-  /// Builds the loading indicator UI.
-  ///
-  /// [context] is the build context, and [controller] is the associated controller.
-  ///
-  /// Override this method to customize the loading UI.
-  ///
-  /// The default implementation shows a centered [CircularProgressIndicator].
-  Widget buildLoading(BuildContext context, T controller) {
-    return const Center(child: CircularProgressIndicator());
-  }
-
-  /// Builds the error UI.
-  ///
-  /// [context] is the build context, and [controller] is the associated controller.
-  ///
-  /// Override this method to customize the error UI.
-  ///
-  /// The default implementation shows a centered text widget with the error message.
-  Widget buildError(BuildContext context, T controller) {
-    if (controller is! LoadingMixin) {
-      throw ArgumentError('Controller does not implement ErrorHandlingMixin');
-    }
-
-    final errorMessage = context.select<T, String?>(
-      (value) => (value as LoadingMixin).errorMessage,
-    );
-    return Material(child: Center(child: Text(errorMessage ?? 'Error')));
-  }
 }
 
 /// The state class for [LifecycleWidget], handling lifecycle events and state updates.
@@ -109,6 +81,7 @@ class LifecycleWidgetState<T extends LifecycleControllerInterface>
   late final T controller;
 
   StreamSubscription<Object>? _eventSubscription;
+  StreamSubscription<Object>? _globalEventSubscription;
 
   /// Initializes the state and the controller.
   ///
@@ -129,6 +102,9 @@ class LifecycleWidgetState<T extends LifecycleControllerInterface>
     if (controller is EventBusMixin) {
       _eventSubscription =
           (controller as EventBusMixin).eventStream<Object>().listen(onEvent);
+      _globalEventSubscription = (controller as EventBusMixin)
+          .globalEventStream<Object>()
+          .listen(onEvent);
     }
   }
 
@@ -152,6 +128,7 @@ class LifecycleWidgetState<T extends LifecycleControllerInterface>
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _eventSubscription?.cancel();
+    _globalEventSubscription?.cancel();
     controller.removeListener(onNotifyListeners);
 
     if (controller is LifecycleMixin) {
@@ -255,37 +232,9 @@ class LifecycleWidgetState<T extends LifecycleControllerInterface>
   Widget build(BuildContext context) {
     return ChangeNotifierProvider.value(
       value: controller,
-      child: Builder(
-        builder: (context) {
-          Widget body = widget.build(context, controller);
-          final isLoading = switch (controller is LoadingMixin) {
-            true => context.select<T, bool>(
-                (value) => (value as LoadingMixin).isLoading,
-              ),
-            false => false,
-          };
-
-          final errorMessage = switch (controller is LoadingMixin) {
-            true => context.select<T, String?>(
-                (value) => (value as LoadingMixin).errorMessage,
-              ),
-            false => null,
-          };
-
-          if (isLoading) {
-            body = Stack(
-              children: [
-                body,
-                widget.buildLoading(context, controller),
-              ],
-            );
-          } else if (errorMessage != null) {
-            body = widget.buildError(context, controller);
-          }
-
-          return body;
-        },
-      ),
+      child: Builder(builder: (context) {
+        return widget.build(context, controller);
+      }),
     );
   }
 }

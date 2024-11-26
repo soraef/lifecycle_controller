@@ -7,8 +7,10 @@ export 'src/lifecycle_controller_interface.dart';
 
 // Mixins
 export 'src/mixins/lifecycle_mixin.dart';
-export 'src/mixins/loading_mixin.dart';
 export 'src/mixins/subscription_mixin.dart';
 export 'src/mixins/debounce_mixin.dart';
 export 'src/mixins/throttle_mixin.dart';
 export 'src/mixins/event_bus_mixin.dart';
+
+// values
+export 'src/values/lifecycle_key.dart';

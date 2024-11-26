@@ -7,13 +7,16 @@ class CounterController extends LifecycleController {
 
   int get counter => _counter;
 
-  void increment() {
+  void increment() async {
     // Use `asyncRun` to handle loading states and errors automatically
-    asyncRun(() async {
-      await Future.delayed(const Duration(seconds: 1));
-      _counter++;
-      notifyListeners(); // Notify listeners to rebuild UI
-    });
+    await lock(
+      id: 'increment',
+      action: () async {
+        await Future.delayed(const Duration(seconds: 1));
+        _counter++;
+        notifyListeners(); // Notify listeners to rebuild UI
+      },
+    );
   }
 
   @override

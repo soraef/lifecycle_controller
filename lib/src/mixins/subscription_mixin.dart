@@ -20,6 +20,7 @@ mixin SubscriptionMixin on ChangeNotifier {
   ///   // Handle event
   /// });
   /// addSubscription(subscription);
+  @protected
   void addSubscription(StreamSubscription subscription) {
     _subscriptions.add(subscription);
   }
@@ -38,6 +39,7 @@ mixin SubscriptionMixin on ChangeNotifier {
   ///   },
   /// );
   /// ```
+  @protected
   StreamSubscription<T> listen<T>(
     Stream<T> stream,
     void Function(T) onData, {
@@ -60,6 +62,7 @@ mixin SubscriptionMixin on ChangeNotifier {
   /// [subscription] is the subscription to cancel.
   ///
   /// Use this method to manually cancel a subscription before the controller is disposed.
+  @protected
   Future<void> cancelSubscription(StreamSubscription subscription) async {
     await subscription.cancel();
     _subscriptions.remove(subscription);
@@ -69,6 +72,7 @@ mixin SubscriptionMixin on ChangeNotifier {
   ///
   /// This method is called automatically in [onDispose], but can be called
   /// manually if needed.
+  @protected
   Future<void> cancelSubscriptionAll() async {
     for (final sub in _subscriptions) {
       await sub.cancel();
