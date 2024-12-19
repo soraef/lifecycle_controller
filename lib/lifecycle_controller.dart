@@ -11,6 +11,7 @@ export 'src/mixins/subscription_mixin.dart';
 export 'src/mixins/debounce_mixin.dart';
 export 'src/mixins/throttle_mixin.dart';
 export 'src/mixins/event_bus_mixin.dart';
+export 'src/mixins/persistent.dart';
 
 // values
 export 'src/values/lifecycle_key.dart';

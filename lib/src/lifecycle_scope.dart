@@ -19,13 +19,16 @@ class LifecycleScope<T extends LifecycleControllerInterface>
     this.onEventCallback,
   });
 
+  @Deprecated('Use LifecycleScope.create instead')
   factory LifecycleScope({
+    Key? key,
     required T controller,
     required Widget Function(BuildContext context) builder,
     void Function(BuildContext context, T controller)? onNotifyListeners,
     void Function(BuildContext context, T controller, Object event)? onEvent,
   }) {
     return LifecycleScope._(
+      key: key,
       create: () => controller,
       builder: builder,
       onNotifyListenersCallback: onNotifyListeners,
@@ -33,30 +36,75 @@ class LifecycleScope<T extends LifecycleControllerInterface>
     );
   }
 
-  factory LifecycleScope.value({
-    required T controller,
-    required Widget Function(BuildContext context) builder,
-    void Function(BuildContext context, T controller)? onNotifyListeners,
-    void Function(BuildContext context, T controller, Object event)? onEvent,
-    Widget Function(BuildContext context)? loadingBuilder,
-    Widget Function(BuildContext context)? errorBuilder,
-  }) {
-    return LifecycleScope._(
-      create: () => controller,
-      onNotifyListenersCallback: onNotifyListeners,
-      onEventCallback: onEvent,
-      builder: builder,
-    );
-  }
-
+  /// Creates the controller to be used in this scope.
+  ///
+  /// When the widget is initialized, the controller's `onInit` is called.
+  /// When the widget is disposed, the controller's `onDispose` is called.
   factory LifecycleScope.create({
+    Key? key,
     required T Function() create,
     required Widget Function(BuildContext context) builder,
     void Function(BuildContext context, T controller)? onNotifyListeners,
     void Function(BuildContext context, T controller, Object event)? onEvent,
   }) {
     return LifecycleScope._(
+      key: key,
       create: create,
+      builder: builder,
+      onNotifyListenersCallback: onNotifyListeners,
+      onEventCallback: onEvent,
+    );
+  }
+
+  /// Uses a controller passed externally.
+  ///
+  /// This controller does not handle initialization or disposal. Therefore,
+  /// initialization and disposal need to be managed externally, such as
+  /// with a [StatefulWidget].
+  ///
+  /// ```dart
+  /// class _MyPageState extends State<MyPage> {
+  ///   late MyController controller;
+  ///
+  ///   @override
+  ///   void initState() {
+  ///     super.initState();
+  ///     controller = MyController();
+  ///     controller.init();
+  ///   }
+  ///
+  ///   @override
+  ///   void dispose() {
+  ///     controller.dispose();
+  ///     super.dispose();
+  ///   }
+  ///
+  ///   @override
+  ///   Widget build(BuildContext context) {
+  ///     return LifecycleScope.value(
+  ///       controller: controller,
+  ///       builder: (context) => Text('MyPage'),
+  ///     );
+  ///   }
+  /// }
+  /// ```
+  ///
+  factory LifecycleScope.value({
+    Key? key,
+    required T controller,
+    required Widget Function(BuildContext context) builder,
+    void Function(BuildContext context, T controller)? onNotifyListeners,
+    void Function(BuildContext context, T controller, Object event)? onEvent,
+  }) {
+    /// Disable init and dispose for the controller
+    if (controller is LifecycleMixin) {
+      (controller as LifecycleMixin).enableInit = false;
+      (controller as LifecycleMixin).enableDispose = false;
+    }
+
+    return LifecycleScope._(
+      key: key,
+      create: () => controller,
       builder: builder,
       onNotifyListenersCallback: onNotifyListeners,
       onEventCallback: onEvent,
@@ -80,7 +128,7 @@ class LifecycleScope<T extends LifecycleControllerInterface>
     }
   }
 
-  /// Called when event is emitted.
+  /// Called when an event is emitted.
   @override
   void onEvent(BuildContext context, T controller, Object event) {
     if (onEventCallback != null) {

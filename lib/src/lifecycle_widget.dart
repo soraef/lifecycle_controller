@@ -92,7 +92,8 @@ class LifecycleWidgetState<T extends LifecycleControllerInterface>
     controller = widget.createController();
     WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (controller is LifecycleMixin) {
+      if (controller is LifecycleMixin &&
+          (controller as LifecycleMixin).enableInit) {
         (controller as LifecycleMixin).onInit();
       }
     });
@@ -106,6 +107,11 @@ class LifecycleWidgetState<T extends LifecycleControllerInterface>
           .globalEventStream<Object>()
           .listen(onEvent);
     }
+  }
+
+  @override
+  void didUpdateWidget(LifecycleWidget<T> oldWidget) {
+    super.didUpdateWidget(oldWidget);
   }
 
   /// Subscribes to the route observer when dependencies change.
@@ -133,7 +139,9 @@ class LifecycleWidgetState<T extends LifecycleControllerInterface>
 
     if (controller is LifecycleMixin) {
       (controller as LifecycleMixin).routeObserver?.unsubscribe(this);
-      (controller as LifecycleMixin).onDispose();
+      if ((controller as LifecycleMixin).enableDispose) {
+        (controller as LifecycleMixin).onDispose();
+      }
     }
     super.dispose();
   }
